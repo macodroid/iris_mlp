@@ -52,5 +52,6 @@ class MLP:
         b: net vector on output layer (size=dim_out)
         y: output vector of network (size=dim_out)
         d: single target vector (size=dim_out)
+        https://stackoverflow.com/questions/50105249/implementing-back-propagation-using-numpy-and-python-for-cleveland-dataset
         '''
         
