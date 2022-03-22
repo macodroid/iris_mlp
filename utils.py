@@ -1,12 +1,31 @@
 import numpy as np
 import random
 
-def ordinary_encoding(y):
+def onehot_encoding(labels):
     """
-    Convert
+    :param labels: label vector
+    :param c: count of unique categories
+    :return: matrix with onehot encoding
+    """
+    onehot_matrix = np.zeros((labels.size, labels.max()+1))
+    onehot_matrix[np.arange(labels.size),labels] = 1
+    return onehot_matrix
+
+
+
+def ordinal_encoding(y):
+    """
+    Convert categorical data to numerical.\n
+    Example: ['A','A','B','C','C'] -> [0,0,1,2,2].\n
     :param y: class labels. Correct shape (n,)
-    :return: ['A','A','B','C'] -> [0,0,1,2]
+    :return: numpy array with shape (n,)
     """
+    i = 0
+    unique_categories = np.unique(y)
+    for cat in unique_categories:
+        y[y == cat] = i
+        i += 1
+    return y.astype(int)
 
 
 def split_train_validation(X, y, train_ratio=0.8):
