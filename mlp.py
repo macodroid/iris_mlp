@@ -1,22 +1,22 @@
-import numpy as np
 from utils import *
 
 
 class MLP:
-    '''
+    """
     Multi-Layer Perceptron (abstract base class)
-    '''
+    """
+
     def __init__(self, dim_in, dim_hid, dim_out):
-        '''
+        """
         Initialize model, set initial weights
-        '''
-        self.dim_in  = dim_in
+        """
+        self.dim_in = dim_in
         self.dim_hid = dim_hid
         self.dim_out = dim_out
 
         self.W_hid = np.random.randn(dim_hid, dim_in + 1)
         self.W_out = np.random.randn(dim_out, dim_hid + 1)
-    
+
     # Activation functions & derivations
     # (not implemented, to be overriden in derived classes)
     def f_hid(self, x):
@@ -32,10 +32,10 @@ class MLP:
         raise NotImplementedError
 
     def forward(self, x):
-        '''
+        """
         Forward pass - compute output of network
         x: single input vector (without bias, size=dim_in)
-        '''
+        """
         a = self.W_hid @ add_bias(x)
         h = self.f_hid(a)
         b = self.W_out @ add_bias(h)
@@ -44,7 +44,7 @@ class MLP:
         return a, h, b, y
 
     def backpropagation(self, x, a, h, b, y, d):
-        '''
+        """
         Backprop pass - compute dW for given input and activations
         x: single input vector (without bias, size=dim_in)
         a: net vector on hidden layer (size=dim_hid)
@@ -53,5 +53,15 @@ class MLP:
         y: output vector of network (size=dim_out)
         d: single target vector (size=dim_out)
         https://stackoverflow.com/questions/50105249/implementing-back-propagation-using-numpy-and-python-for-cleveland-dataset
-        '''
-        
+        """
+        # backpropagation
+        output_layer_error = y - d
+        output_layer_delta = output_layer_error * y * (1 - y)
+
+        hidden_layer_error = np.dot(output_layer_delta, self.W_out.T)
+        hidden_layer_delta = hidden_layer_error * h * (1 - h)
+
+        dW_hid = np.dot(add_bias(h), output_layer_delta) / self.dim_out
+        dW_out = np.dot(add_bias(x), hidden_layer_delta) / self.dim_out
+
+        return dW_hid, dW_out

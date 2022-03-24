@@ -1,16 +1,16 @@
 import numpy as np
 import random
 
-def onehot_encoding(labels):
+
+def onehot_encode(labels):
     """
     :param labels: label vector
     :param c: count of unique categories
     :return: matrix with onehot encoding
     """
-    onehot_matrix = np.zeros((labels.size, labels.max()+1))
-    onehot_matrix[np.arange(labels.size),labels] = 1
+    onehot_matrix = np.zeros((labels.size, labels.max() + 1))
+    onehot_matrix[np.arange(labels.size), labels] = 1
     return onehot_matrix
-
 
 
 def ordinal_encoding(y):
