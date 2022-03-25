@@ -61,9 +61,11 @@ class MLPClassifier(MLP):
         '''
         return np.sum((targets - outputs) ** 2, axis=0)
 
-    def train(self, inputs, labels, alpha=0.1, eps=100, compute_accuracy=True):
-        (_, count) = inputs.shape
-        targets = onehot_encode(labels)
+    def train(self, train_X, train_y, val_X, val_y, batch_size, alpha=0.1, eps=100, compute_accuracy=True):
+        train_count = train_X.shape[0]
+        val_count = val_X.shape[0]
+        y_train_encoded = onehot_encode(train_y)
+        y_val_encoded = onehot_encode(val_y)
 
         CEs = []
         REs = []
@@ -71,6 +73,20 @@ class MLPClassifier(MLP):
         for ep in range(eps):
             CE = 0
             RE = 0
+            sample_train = np.random.choice(train_count, batch_size)
+            sample_val = np.random.choice(val_count, batch_size)
+            x = train_X[sample_train]
+            d = y_train_encoded[sample_train]
+            h, y = self.forward(x)
+            dW_hid, dW_out = self.backpropagation(x, h, y, d, batch_size)
+
+            self.W_hid += alpha * dW_hid
+            self.W_out += alpha * dW_out
+
+
+            print('as')
+
+
 
 
     def predict(self):

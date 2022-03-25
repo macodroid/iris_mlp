@@ -57,5 +57,5 @@ def add_bias(X):
     if X.ndim == 1:
         return np.concatenate((X, [1]))
     else:
-        pad = np.ones((1, X.shape[1]))
-        return np.concatenate((X, pad), axis=0)
+        pad = np.ones((X.shape[0],1))
+        return np.concatenate((pad,X), axis=1)
