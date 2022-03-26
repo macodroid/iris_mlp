@@ -43,7 +43,7 @@ class MLP:
 
         return a, h, b, yhat
 
-    def backpropagation(self, x, a, h, b, yhat, y):
+    def backpropagation(self, x, a, h, b, y, d):
         """
         Backprop pass - compute dW for given input and activations
         x: single input vector (without bias, size=dim_in)
@@ -51,7 +51,7 @@ class MLP:
         y: output vector of network (size=dim_out)
         d: single target vector (size=dim_out)
         """
-        output_error = (yhat - y) * self.df_out(b)
+        output_error = (d - y) * self.df_out(b)
         hidden_error = output_error @ self.W_out
         error_h = hidden_error[:, :-1] * self.df_hid(a)
         dW_out = output_error.T @ add_bias(h)

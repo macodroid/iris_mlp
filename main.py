@@ -24,6 +24,6 @@ train_features, train_labels, val_features, val_labels = split_train_validation(
 
 model = MLPClassifier(dim_in=dim, dim_hid=20, n_classes=np.max(train_labels) + 1)
 
-trainCE, trainRE, valCE, valRE = model.train(train_features, train_labels, val_features, val_labels, batch_size=64)
+trainCE, trainRE, valCE, valRE = model.train(train_features, train_labels, val_features, val_labels, batch_size=256)
 
 print("a")
