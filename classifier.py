@@ -70,7 +70,7 @@ class MLPClassifier(MLP):
         REs = []
 
         for ep in range(eps):
-            len_batches, X, y = create_batches(train_X, train_y, batch_size)
+            len_batches, X, y = self.create_batches(train_X, train_y, batch_size)
             CE = 0
             RE = 0
             for batch in range(len_batches):
@@ -87,62 +87,45 @@ class MLPClassifier(MLP):
             RE /= train_X.shape[0]
             CEs.append(CE)
             REs.append(RE)
+            val_CE, val_RE = self.test(val_X, val_y)
             if (ep + 1) % 5 == 0:
-                print('Epoch {:3d}/{}, CE = {:6.2%}, RE = {:.5f}'.format(ep + 1, eps, CE, RE))
+                print('Train Error: Epoch {:3d}/{}, CE = {:6.2%}, RE = {:.5f}'.format(ep + 1, eps, CE, RE))
+                print('Validation Error: Epoch {:3d}/{}, CE = {:6.2%}, RE = {:.5f}'.format(ep + 1, eps, val_CE, val_RE))
+
+            # Validation
+
+
         return p[0], p[0], p[0], p[0]
 
-    # def train(self, train_X, train_y, val_X, val_y, batch_size, alpha=0.1, eps=500, compute_accuracy=True):
-    #     train_count = train_X.shape[0]
-    #     val_count = val_X.shape[0]
-    #     y_train_encoded = onehot_encode(train_y)
-    #     y_val_encoded = onehot_encode(val_y)
-    #
-    #     CEs = []
-    #     REs = []
-    #     batches = create_batches(train_X, y_train_encoded, batch_size)
-    #     for ep in range(eps):
-    #         CE = 0
-    #         RE = 0
-    #         sample_train = np.random.choice(train_count, batch_size)
-    #         sample_val = np.random.choice(val_count, batch_size)
-    #         x = train_X[sample_train]
-    #         d = y_train_encoded[sample_train]
-    #         a, h, b, yhat = self.forward(x)
-    #         dW_hid, dW_out = self.backpropagation(x, a, h, b, yhat, d)
-    #
-    #         self.W_hid += alpha * dW_hid
-    #         self.W_out += alpha * dW_out
-    #
-    #         CE = (np.not_equal(train_y[sample_train], onehot_decode(yhat))).sum()
-    #
-    #         RE = np.sum(self.error(d, yhat), axis=0)
-    #
-    #         CE /= batch_size
-    #         RE /= batch_size
-    #         CEs.append(CE)
-    #         REs.append(RE)
-    #         if (ep + 1) % 5 == 0:
-    #             print('Epoch {:3d}/{}, CE = {:6.2%}, RE = {:.5f}'.format(ep + 1, eps, CE, RE))
-    #
-    #     print("a")
+    def test(self, inputs, labels):
+        """
+        Test model: forward pass on given inputs, and compute errors
+        """
+        targets = onehot_encode(labels)
+        outputs, predicted = self.predict(inputs)
+        (np.not_equal(labels, predicted)).sum()
+        CE = (np.not_equal(labels, predicted)).sum() / inputs.shape[0]
+        RE = np.mean((self.error(targets, outputs)))
+        return CE, RE
 
+    def predict(self, inputs):
+        """
+        Prediction = forward pass
+        """
+        # If self.forward() can process only one input at a time
+        _, _, _, outputs = self.forward(inputs)
+        # # If self.forward() can take a whole batch
+        # *_, outputs = self.forward(inputs)
+        return outputs, onehot_decode(outputs)
 
-def predict(self):
-    pass
-
-
-def test(self):
-    pass
-
-
-def create_batches(X, y, batch_size):
-    mini_batches_X = []
-    mini_batches_y = []
-    batch_count = X.shape[0] // batch_size
-    indices = np.arange(X.shape[0], dtype=int)
-    random.shuffle(indices)
-    indices = np.array_split(indices, batch_count)
-    for i in indices:
-        mini_batches_X.append(X[i])
-        mini_batches_y.append(y[i])
-    return batch_count, mini_batches_X, mini_batches_y
+    def create_batches(self, X, y, batch_size):
+        mini_batches_X = []
+        mini_batches_y = []
+        batch_count = X.shape[0] // batch_size
+        indices = np.arange(X.shape[0], dtype=int)
+        random.shuffle(indices)
+        indices = np.array_split(indices, batch_count)
+        for i in indices:
+            mini_batches_X.append(X[i])
+            mini_batches_y.append(y[i])
+        return batch_count, mini_batches_X, mini_batches_y
