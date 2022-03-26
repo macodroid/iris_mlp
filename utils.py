@@ -13,6 +13,10 @@ def onehot_encode(labels):
     return onehot_matrix
 
 
+def onehot_decode(X):
+    return np.argmax(X, axis=1)
+
+
 def ordinal_encoding(y):
     """
     Convert categorical data to numerical.\n
@@ -57,5 +61,5 @@ def add_bias(X):
     if X.ndim == 1:
         return np.concatenate((X, [1]))
     else:
-        pad = np.ones((X.shape[0],1))
-        return np.concatenate((pad,X), axis=1)
+        pad = np.ones((X.shape[0], 1))
+        return np.concatenate((pad, X), axis=1)

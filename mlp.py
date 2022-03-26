@@ -36,34 +36,24 @@ class MLP:
         Forward pass - compute output of network
         x: single input vector (without bias, size=dim_in)
         """
-        x = add_bias(x)
-        a = x @ self.W_hid.T
+        a = add_bias(x) @ self.W_hid.T
         h = self.f_hid(a)
-        h = add_bias(h)
-        b = h @ self.W_out.T
-        y = self.f_out(b)
+        b = add_bias(h) @ self.W_out.T
+        yhat = self.f_out(b)
 
-        return h, y
+        return a, h, b, yhat
 
-    def backpropagation(self, x, h, y, d, batch_size):
+    def backpropagation(self, x, a, h, b, yhat, y):
         """
         Backprop pass - compute dW for given input and activations
         x: single input vector (without bias, size=dim_in)
         h: activation of hidden layer (without bias, size=dim_hid)
         y: output vector of network (size=dim_out)
         d: single target vector (size=dim_out)
-        https://stackoverflow.com/questions/50105249/implementing-back-propagation-using-numpy-and-python-for-cleveland-dataset
         """
-        # backpropagation
-        output_layer_error = y - d
-        output_layer_delta = output_layer_error * y * (1 - y)
-
-        hidden_layer_error = np.dot(output_layer_delta, self.W_out)
-        hidden_layer_delta = hidden_layer_error * h * (1 - h)
-        h = add_bias(h)
-        # dW_hid = np.dot(add_bias(h), output_layer_delta) / batch_size
-        dW_hid = (output_layer_delta.T @ h) / batch_size
-        x = add_bias(x)
-        # dW_out = np.dot(add_bias(x), hidden_layer_delta) / batch_size
-        dW_out = (hidden_layer_delta.T @ x) / batch_size
-        return dW_hid.T, dW_out.T
+        output_error = (yhat - y) * self.df_out(b)
+        hidden_error = output_error @ self.W_out
+        error_h = hidden_error[:, :-1] * self.df_hid(a)
+        dW_out = output_error.T @ add_bias(h)
+        dW_hid = error_h.T @ add_bias(x)
+        return dW_hid, dW_out
