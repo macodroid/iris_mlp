@@ -1,5 +1,9 @@
+import os
+
 import numpy as np
 import random
+
+from matplotlib import pyplot as plt
 
 
 def onehot_encode(labels):
@@ -63,3 +67,19 @@ def add_bias(X):
     else:
         pad = np.ones((X.shape[0], 1))
         return np.concatenate((pad, X), axis=1)
+
+
+def plot_train_val_error(trainCE, trainRE, valCE, valRE):
+    fig, (ax1, ax2) = plt.subplots(2, gridspec_kw={'hspace': 0.55})
+    ax1.set_title("Test vs Validation classification error")
+    ax1.plot(trainCE, '-r', label='train classification error')
+    ax1.plot(valCE, '-g', label='validation classification error')
+    ax1.set(xlabel='epoch', ylabel='error')
+    ax1.legend(loc='best', shadow=True, fontsize='small')
+    ax2.set_title("Test vs Validation regression error")
+    ax2.plot(trainRE, '-r', label='train regression error')
+    ax2.plot(valRE, '-g', label='validation regression error')
+    ax2.set(xlabel='epoch', ylabel='error')
+    ax2.legend(loc='best', shadow=True, fontsize='small')
+    plt.legend()
+    plt.show()

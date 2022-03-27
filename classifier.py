@@ -1,5 +1,3 @@
-import numpy as np
-
 from mlp import *
 from utils import *
 
@@ -64,10 +62,11 @@ class MLPClassifier(MLP):
         return np.sum((targets - outputs) ** 2, axis=0)
 
     def train(self, train_X, train_y, val_X, val_y, batch_size, alpha=0.1, eps=500, compute_accuracy=True):
-        p = [1, 1, 1, 1]
 
-        CEs = []
-        REs = []
+        test_CEs = []
+        test_REs = []
+        val_CEs = []
+        val_REs = []
 
         for ep in range(eps):
             len_batches, X, y = self.create_batches(train_X, train_y, batch_size)
@@ -85,17 +84,16 @@ class MLPClassifier(MLP):
 
             CE /= train_X.shape[0]
             RE /= train_X.shape[0]
-            CEs.append(CE)
-            REs.append(RE)
+            test_CEs.append(CE)
+            test_REs.append(RE)
             val_CE, val_RE = self.test(val_X, val_y)
+            val_CEs.append(val_CE)
+            val_REs.append(val_RE)
             if (ep + 1) % 5 == 0:
                 print('Train Error: Epoch {:3d}/{}, CE = {:6.2%}, RE = {:.5f}'.format(ep + 1, eps, CE, RE))
-                print('Validation Error: Epoch {:3d}/{}, CE = {:6.2%}, RE = {:.5f}'.format(ep + 1, eps, val_CE, val_RE))
+                print('Val Error: Epoch {:3d}/{}, CE = {:6.2%}, RE = {:.5f}'.format(ep + 1, eps, val_CE, val_RE))
 
-            # Validation
-
-
-        return p[0], p[0], p[0], p[0]
+        return test_CEs, test_REs, val_CEs, val_REs
 
     def test(self, inputs, labels):
         """
@@ -112,10 +110,7 @@ class MLPClassifier(MLP):
         """
         Prediction = forward pass
         """
-        # If self.forward() can process only one input at a time
         _, _, _, outputs = self.forward(inputs)
-        # # If self.forward() can take a whole batch
-        # *_, outputs = self.forward(inputs)
         return outputs, onehot_decode(outputs)
 
     def create_batches(self, X, y, batch_size):

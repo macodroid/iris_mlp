@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+
 from classifier import *
 
 # load train data
@@ -17,13 +19,22 @@ test_labels = test_data[:, -1:].flatten()  # ['A','B','C' .... 'A']
 train_labels = ordinal_encoding(train_labels)
 test_labels = ordinal_encoding(test_labels)
 
-train_features -= np.mean(train_features, axis=0)
-train_features /= np.std(train_features, axis=0)
+mean = np.mean(train_features, axis=0)
+std = np.std(train_features, axis=0)
+
+train_features -= mean
+train_features /= std
+
+test_features -= mean
+test_features /= std
 
 train_features, train_labels, val_features, val_labels = split_train_validation(train_features, train_labels)
 
 model = MLPClassifier(dim_in=dim, dim_hid=20, n_classes=np.max(train_labels) + 1)
 
-trainCE, trainRE, valCE, valRE = model.train(train_features, train_labels, val_features, val_labels, batch_size=256)
+trainCEs, trainREs, valCEs, valREs = model.train(train_features, train_labels, val_features, val_labels, batch_size=256)
+testCE, testRE = model.test(test_features, test_labels)
+print('Final testing error: CE = {:6.2%}, RE = {:.5f}'.format(testCE, testRE))
 
-print("a")
+# plot test and validation error
+plot_train_val_error(trainCEs, trainREs, valCEs, valREs)
