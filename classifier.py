@@ -3,11 +3,16 @@ from utils import *
 
 
 class MLPClassifier(MLP):
-    def __init__(self, dim_in, dim_hid, n_classes, activation_hid, activation_out):
+    def __init__(self, dim_in, dim_hid,
+                 n_classes, activation_hid,
+                 activation_out, inti_weights_type,
+                 lambd=None):
+        self.lambd = lambd
         self.n_classes = n_classes
         self.activation_hid = activation_hid
         self.activation_out = activation_out
-        super().__init__(dim_in, dim_hid, dim_out=n_classes)
+        self.lamb = lambd
+        super().__init__(dim_in, dim_hid, dim_out=n_classes, init_type=inti_weights_type)
 
     # @private
     def sigmoid(self, x):
@@ -79,17 +84,24 @@ class MLPClassifier(MLP):
         """
         return np.sum((targets - outputs) ** 2, axis=0)
 
-    def train(self, train_X, train_y, val_X, val_y, batch_size, optimizer, alpha=0.1, eps=500, gamma=0.9):
+    def train(self, train_X, train_y,
+              val_X, val_y,
+              optimizer,
+              batch_size=None,
+              alpha=0.1,
+              eps=200,
+              gamma=None,
+              display_error=True):
 
         test_CEs = []
         test_REs = []
         val_CEs = []
         val_REs = []
 
-        # Mini-batch sgd
+        # Mini-batch gd
         if optimizer == 'mini-batch':
             for ep in range(eps):
-                len_batches, X, y = self.create_batches(train_X, train_y, batch_size)
+                len_batches, X, y = create_batches(train_X, train_y, batch_size)
                 CE = 0
                 RE = 0
                 for batch in range(len_batches):
@@ -109,13 +121,13 @@ class MLPClassifier(MLP):
                 val_CE, val_RE = self.test(val_X, val_y)
                 val_CEs.append(val_CE)
                 val_REs.append(val_RE)
-                if (ep + 1) % 5 == 0:
-                    self.print_errors('Train', CE, RE, ep, eps)
-                    self.print_errors('Valid', val_CE, val_RE, ep, eps)
+                if (ep + 1) % 5 == 0 and display_error:
+                    print_errors('Train', CE, RE, ep, eps)
+                    print_errors('Valid', val_CE, val_RE, ep, eps)
         # Mini-batch sgd using momentum
         elif optimizer == 'momentum':
             for ep in range(eps):
-                len_batches, X, y = self.create_batches(train_X, train_y, batch_size)
+                len_batches, X, y = create_batches(train_X, train_y, batch_size)
                 CE = 0
                 RE = 0
                 v_hid = np.zeros(self.W_hid.shape)
@@ -142,9 +154,9 @@ class MLPClassifier(MLP):
                 val_CE, val_RE = self.test(val_X, val_y)
                 val_CEs.append(val_CE)
                 val_REs.append(val_RE)
-                if (ep + 1) % 5 == 0:
-                    self.print_errors('Train', CE, RE, ep, eps)
-                    self.print_errors('Valid', val_CE, val_RE, ep, eps)
+                if (ep + 1) % 5 == 0 and display_error:
+                    print_errors('Train', CE, RE, ep, eps)
+                    print_errors('Valid', val_CE, val_RE, ep, eps)
         # SGD
         elif optimizer == 'sgd':
             for ep in range(eps):
@@ -168,13 +180,13 @@ class MLPClassifier(MLP):
 
                 val_CEs.append(val_CE)
                 val_REs.append(val_RE)
-                if (ep + 1) % 5 == 0:
-                    self.print_errors('Train', CE, RE, ep, eps)
-                    self.print_errors('Valid', val_CE, val_RE, ep, eps)
+                if (ep + 1) % 5 == 0 and display_error:
+                    print_errors('Train', CE, RE, ep, eps)
+                    print_errors('Valid', val_CE, val_RE, ep, eps)
 
         return test_CEs, test_REs, val_CEs, val_REs
 
-    def test(self, inputs, labels, confusion_matrix=False):
+    def test(self, inputs, labels, confusion_matrix=False, l2=True):
         """
         Test model: forward pass on given inputs, and compute errors
         """
@@ -193,21 +205,3 @@ class MLPClassifier(MLP):
         """
         _, _, _, outputs = self.forward(inputs)
         return outputs, onehot_decode(outputs)
-
-    def create_batches(self, X, y, batch_size):
-        """
-        Create mini batches from dataset.
-        """
-        mini_batches_X = []
-        mini_batches_y = []
-        batch_count = X.shape[0] // batch_size
-        indices = np.arange(X.shape[0], dtype=int)
-        random.shuffle(indices)
-        indices = np.array_split(indices, batch_count)
-        for i in indices:
-            mini_batches_X.append(X[i])
-            mini_batches_y.append(y[i])
-        return batch_count, mini_batches_X, mini_batches_y
-
-    def print_errors(self, error_type, CE, RE, ep, eps):
-        print(error_type + 'Error: Epoch {:3d}/{}, CE = {:6.2%}, RE = {:.5f}'.format(ep + 1, eps, CE, RE))

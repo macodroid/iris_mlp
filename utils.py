@@ -104,3 +104,23 @@ def plot_confusion_matrix(matrix):
     plt.ylabel('Actuals', fontsize=18)
     plt.title('Confusion Matrix', fontsize=18)
     plt.show()
+
+
+def create_batches(X, y, batch_size):
+    """
+    Create mini batches from dataset.
+    """
+    mini_batches_X = []
+    mini_batches_y = []
+    batch_count = X.shape[0] // batch_size
+    indices = np.arange(X.shape[0], dtype=int)
+    random.shuffle(indices)
+    indices = np.array_split(indices, batch_count)
+    for i in indices:
+        mini_batches_X.append(X[i])
+        mini_batches_y.append(y[i])
+    return batch_count, mini_batches_X, mini_batches_y
+
+
+def print_errors(error_type, CE, RE, ep, eps):
+    print(error_type + 'Error: Epoch {:3d}/{}, CE = {:6.2%}, RE = {:.5f}'.format(ep + 1, eps, CE, RE))

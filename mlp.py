@@ -6,7 +6,7 @@ class MLP:
     Multi-Layer Perceptron (abstract base class)
     """
 
-    def __init__(self, dim_in, dim_hid, dim_out):
+    def __init__(self, dim_in, dim_hid, dim_out, init_type):
         """
         Initialize model, set initial weights
         """
@@ -14,8 +14,14 @@ class MLP:
         self.dim_hid = dim_hid
         self.dim_out = dim_out
 
-        self.W_hid = np.random.randn(dim_hid, dim_in + 1)
-        self.W_out = np.random.randn(dim_out, dim_hid + 1)
+        # generate random weights from standard/normal distribution
+        if init_type == 'normal':
+            self.W_hid = np.random.randn(dim_hid, dim_in + 1)
+            self.W_out = np.random.randn(dim_out, dim_hid + 1)
+        # generate random weights from uniform distribution
+        elif init_type == 'uniform':
+            self.W_hid = np.random.rand(dim_hid, dim_in + 1)
+            self.W_out = np.random.rand(dim_out, dim_hid + 1)
 
     # Activation functions & derivations
     # (not implemented, to be overriden in derived classes)

@@ -7,6 +7,7 @@ class Optimizer(enum.Enum):
     MiniBatch = 'mini-batch'
     Momentum = 'momentum'
     SGD = 'sgd'
+    L2MiniBatch = 'L2_mini-batch'
 
 
 class Activation(enum.Enum):
@@ -42,18 +43,28 @@ test_features /= std
 
 train_features, train_labels, val_features, val_labels = split_train_validation(train_features, train_labels)
 
-model = MLPClassifier(dim_in=dim,
-                      dim_hid=15,
-                      n_classes=np.max(train_labels) + 1,
-                      activation_hid=Activation.ReLu.value,
-                      activation_out=Activation.Sigmoid.value)
+"""
+Hidden layer neurons: 20
+Activation function hidden layer: sigmoid
+Activation function output layer: sigmoid
+Optimizer alg: mini batch gd and momentum
+batch size: 128
+"""
+model1 = MLPClassifier(dim_in=dim,
+                       dim_hid=20,
+                       n_classes=np.max(train_labels) + 1,
+                       activation_hid=Activation.Sigmoid.value,
+                       activation_out=Activation.Sigmoid.value,
+                       inti_weights_type='uniform',
+                       lambd=0.08)
 
-trainCEs, trainREs, valCEs, valREs = model.train(train_features, train_labels,
-                                                 val_features, val_labels,
-                                                 batch_size=256,
-                                                 optimizer=Optimizer.MiniBatch.value)
-testCE, testRE, confusion_matrix = model.test(test_features, test_labels, confusion_matrix=True)
-print('Final testing error: CE = {:6.2%}, RE = {:.5f}'.format(testCE, testRE))
+trainCEs, trainREs, valCEs, valREs = model1.train(train_features, train_labels,
+                                                  val_features, val_labels,
+                                                  optimizer=Optimizer.L2MiniBatch.value,
+                                                  batch_size=128)
+
+testCE, testRE, confusion_matrix = model1.test(test_features, test_labels, confusion_matrix=True)
+print('Final testing error model1: CE = {:6.2%}, RE = {:.5f}'.format(testCE, testRE))
 
 # plot test and validation error
 plot_train_val_error(trainCEs, trainREs, valCEs, valREs)
