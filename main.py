@@ -1,6 +1,18 @@
-import matplotlib.pyplot as plt
+import enum
 
 from classifier import *
+
+
+class Optimizer(enum.Enum):
+    MiniBatch = 'mini-batch'
+    Momentum = 'momentum'
+    SGD = 'sgd'
+
+
+class Activation(enum.Enum):
+    Sigmoid = 'sigmoid'
+    ReLu = 'relu'
+
 
 # load train data
 train_data = np.loadtxt('2d.trn.dat', dtype=str)
@@ -30,11 +42,19 @@ test_features /= std
 
 train_features, train_labels, val_features, val_labels = split_train_validation(train_features, train_labels)
 
-model = MLPClassifier(dim_in=dim, dim_hid=20, n_classes=np.max(train_labels) + 1)
+model = MLPClassifier(dim_in=dim,
+                      dim_hid=15,
+                      n_classes=np.max(train_labels) + 1,
+                      activation_hid=Activation.ReLu.value,
+                      activation_out=Activation.Sigmoid.value)
 
-trainCEs, trainREs, valCEs, valREs = model.train(train_features, train_labels, val_features, val_labels, batch_size=256)
-testCE, testRE = model.test(test_features, test_labels)
+trainCEs, trainREs, valCEs, valREs = model.train(train_features, train_labels,
+                                                 val_features, val_labels,
+                                                 batch_size=256,
+                                                 optimizer=Optimizer.MiniBatch.value)
+testCE, testRE, confusion_matrix = model.test(test_features, test_labels, confusion_matrix=True)
 print('Final testing error: CE = {:6.2%}, RE = {:.5f}'.format(testCE, testRE))
 
 # plot test and validation error
 plot_train_val_error(trainCEs, trainREs, valCEs, valREs)
+plot_confusion_matrix(confusion_matrix)

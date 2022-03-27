@@ -1,5 +1,3 @@
-import os
-
 import numpy as np
 import random
 
@@ -82,4 +80,27 @@ def plot_train_val_error(trainCE, trainRE, valCE, valRE):
     ax2.set(xlabel='epoch', ylabel='error')
     ax2.legend(loc='best', shadow=True, fontsize='small')
     plt.legend()
+    plt.show()
+
+
+def compute_confusion_matrix(true, pred):
+    K = len(np.unique(true))
+    result = np.zeros((K, K))
+
+    for i in range(len(true)):
+        result[true[i]][pred[i]] += 1
+
+    return result
+
+
+def plot_confusion_matrix(matrix):
+    fig, ax = plt.subplots(figsize=(7.5, 7.5))
+    ax.matshow(matrix, cmap=plt.cm.Greens, alpha=0.3)
+    for i in range(matrix.shape[0]):
+        for j in range(matrix.shape[1]):
+            ax.text(x=j, y=i, s=matrix[i, j], va='center', ha='center', size='xx-large')
+
+    plt.xlabel('Predictions', fontsize=18)
+    plt.ylabel('Actuals', fontsize=18)
+    plt.title('Confusion Matrix', fontsize=18)
     plt.show()
