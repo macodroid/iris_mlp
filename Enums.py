@@ -3,8 +3,7 @@ import enum
 
 class Optimizer(enum.Enum):
     MiniBatch = 'mini-batch'
-    Momentum = 'momentum'
-    SGD = 'sgd'
+    Batch = 'batch'
     Adam = 'adam'
 
 

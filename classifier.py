@@ -79,14 +79,14 @@ class MLPClassifier(MLP):
               val_X, val_y,
               optimizer,
               alpha,
-              eps,
+              epochs,
+              momentum=False,
               epsilon=None,
               batch_size=None,
               beta1=None,
               beta2=None,
               display_error=True):
         """
-
         Args:
             train_X:
             train_y:
@@ -94,95 +94,83 @@ class MLPClassifier(MLP):
             val_y:
             optimizer:
             alpha:
-            eps:
-            epsilon:
+            epochs:
             batch_size:
+            momentum:
+            epsilon:
             beta1:
             beta2:
             display_error:
-
         Returns:
-
         """
         test_CEs = []
         test_REs = []
         val_CEs = []
         val_REs = []
+        amount = train_X.shape[0]
+
+        v_hid = np.zeros(self.W_hid.shape)
+        v_out = np.zeros(self.W_out.shape)
 
         # Mini-batch gd
         if optimizer == Optimizer.MiniBatch:
-            for ep in range(eps):
+            for ep in range(epochs):
                 len_batches, X, y = create_batches(train_X, train_y, batch_size)
                 CE = 0
                 RE = 0
                 for batch in range(len_batches):
                     x = X[batch]
                     d = onehot_encode(y[batch])
+
                     a, h, b, yhat = self.forward(x)
                     dW_hid, dW_out = self.backpropagation(x, a, h, b, yhat, d)
-                    self.W_hid = self.W_hid + alpha * dW_hid
-                    self.W_out = self.W_out + alpha * dW_out
+                    # using momentum
+                    if momentum:
+                        self.W_hid = self.W_hid + alpha * dW_hid
+                        self.W_out = self.W_out + alpha * dW_out
+
+                        self.W_hid = self.W_hid + (alpha * v_hid)
+                        self.W_out = self.W_out + (alpha * v_out)
+                    # not using momentum
+                    else:
+                        self.W_hid = self.W_hid + alpha * dW_hid
+                        self.W_out = self.W_out + alpha * dW_out
+
                     CE += (np.not_equal(y[batch], onehot_decode(yhat))).sum()
                     RE += np.sum(self.error(d, yhat), axis=0)
 
-                CE /= train_X.shape[0]
-                RE /= train_X.shape[0]
+                CE /= amount
+                RE /= amount
                 test_CEs.append(CE)
                 test_REs.append(RE)
                 val_CE, val_RE = self.test(val_X, val_y)
                 val_CEs.append(val_CE)
                 val_REs.append(val_RE)
                 if (ep + 1) % 5 == 0 and display_error:
-                    print_errors('Train', CE, RE, ep, eps)
-                    print_errors('Valid', val_CE, val_RE, ep, eps)
-        # Mini-batch sgd using momentum
-        elif optimizer == Optimizer.Momentum:
-            v_hid = np.zeros(self.W_hid.shape)
-            v_out = np.zeros(self.W_out.shape)
-            for ep in range(eps):
-                len_batches, X, y = create_batches(train_X, train_y, batch_size)
-                CE = 0
-                RE = 0
-                for batch in range(len_batches):
-                    x = X[batch]
-                    d = onehot_encode(y[batch])
-                    a, h, b, yhat = self.forward(x)
-                    dW_hid, dW_out = self.backpropagation(x, a, h, b, yhat, d)
-
-                    v_hid = beta1 * v_hid + (1 - beta1) * dW_hid
-                    v_out = beta1 * v_out + (1 - beta1) * dW_out
-
-                    self.W_hid = self.W_hid + (alpha * v_hid)
-                    self.W_out = self.W_out + (alpha * v_out)
-
-                    CE += (np.not_equal(y[batch], onehot_decode(yhat))).sum()
-                    RE += np.sum(self.error(d, yhat), axis=0)
-
-                CE /= train_X.shape[0]
-                RE /= train_X.shape[0]
-                test_CEs.append(CE)
-                test_REs.append(RE)
-                val_CE, val_RE = self.test(val_X, val_y)
-                val_CEs.append(val_CE)
-                val_REs.append(val_RE)
-                if (ep + 1) % 5 == 0 and display_error:
-                    print_errors('Train', CE, RE, ep, eps)
-                    print_errors('Valid', val_CE, val_RE, ep, eps)
-        # SGD
-        elif optimizer == Optimizer.SGD:
-            for ep in range(eps):
+                    print_errors('Train', CE, RE, ep, epochs)
+                    print_errors('Valid', val_CE, val_RE, ep, epochs)
+        # Batch Gradient descent
+        elif optimizer == Optimizer.Batch:
+            for ep in range(epochs):
                 d = onehot_encode(train_y)
                 a, h, b, yhat = self.forward(train_X)
                 dW_hid, dW_out = self.backpropagation(train_X, a, h, b, yhat, d)
 
-                self.W_hid += alpha * dW_hid
-                self.W_out += alpha * dW_out
+                if momentum:
+                    self.W_hid += alpha * dW_hid
+                    self.W_out += alpha * dW_out
+
+                    self.W_hid = self.W_hid + (alpha * v_hid)
+                    self.W_out = self.W_out + (alpha * v_out)
+                else:
+                    self.W_hid += alpha * dW_hid
+                    self.W_out += alpha * dW_out
 
                 CE = (np.not_equal(train_y, onehot_decode(yhat))).sum()
                 RE = np.sum(self.error(d, yhat), axis=0)
 
-                CE /= train_X.shape[0]
-                RE /= train_X.shape[0]
+                CE /= amount
+                RE /= amount
 
                 test_CEs.append(CE)
                 test_REs.append(RE)
@@ -192,15 +180,15 @@ class MLPClassifier(MLP):
                 val_CEs.append(val_CE)
                 val_REs.append(val_RE)
                 if (ep + 1) % 5 == 0 and display_error:
-                    print_errors('Train', CE, RE, ep, eps)
-                    print_errors('Valid', val_CE, val_RE, ep, eps)
-        # Algorithm1: from papier [Link: https://arxiv.org/pdf/1412.6980.pdf]
+                    print_errors('Train', CE, RE, ep, epochs)
+                    print_errors('Valid', val_CE, val_RE, ep, epochs)
+        # (Page 2)Algorithm1: from papier [Link: https://arxiv.org/pdf/1412.6980.pdf]
         elif optimizer == Optimizer.Adam:
             v_dw = np.zeros(self.W_hid.shape)
             v_do = np.zeros(self.W_out.shape)
             s_dw = np.zeros(self.W_hid.shape)
             s_do = np.zeros(self.W_out.shape)
-            for ep in range(eps):
+            for ep in range(epochs):
                 len_batches, X, y = create_batches(train_X, train_y, batch_size)
                 CE = 0
                 RE = 0
@@ -229,20 +217,36 @@ class MLPClassifier(MLP):
                     CE += (np.not_equal(y[batch], onehot_decode(yhat))).sum()
                     RE += np.sum(self.error(d, yhat), axis=0)
 
-                CE /= train_X.shape[0]
-                RE /= train_X.shape[0]
+                CE /= amount
+                RE /= amount
                 test_CEs.append(CE)
                 test_REs.append(RE)
                 val_CE, val_RE = self.test(val_X, val_y)
                 val_CEs.append(val_CE)
                 val_REs.append(val_RE)
                 if (ep + 1) % 5 == 0 and display_error:
-                    print_errors('Train', CE, RE, ep, eps)
-                    print_errors('Valid', val_CE, val_RE, ep, eps)
+                    print_errors('Train', CE, RE, ep, epochs)
+                    print_errors('Valid', val_CE, val_RE, ep, epochs)
 
         return test_CEs, test_REs, val_CEs, val_REs
 
-    def test(self, inputs, labels, confusion_matrix=False, l2=True):
+    def calculate_momentum_velocity(self, beta1, dW_hid, dW_out, v_hid, v_out):
+        """
+        Calculate velocity for momentum
+        Args:
+            beta1: hyper-param
+            dW_hid: weight from backprop hidden layer
+            dW_out: weight from backprop output layer
+            v_hid: velocity hidden layer
+            v_out: velocity output layer
+
+        Returns: v_hid, v_out
+        """
+        v_hid = beta1 * v_hid + (1 - beta1) * dW_hid
+        v_out = beta1 * v_out + (1 - beta1) * dW_out
+        return v_hid, v_out
+
+    def test(self, inputs, labels, confusion_matrix=False):
         """
         Test model: forward pass on given inputs, and compute errors
         """
