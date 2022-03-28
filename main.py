@@ -1,19 +1,4 @@
-import enum
-
 from classifier import *
-
-
-class Optimizer(enum.Enum):
-    MiniBatch = 'mini-batch'
-    Momentum = 'momentum'
-    SGD = 'sgd'
-    L2MiniBatch = 'L2_mini-batch'
-
-
-class Activation(enum.Enum):
-    Sigmoid = 'sigmoid'
-    ReLu = 'relu'
-
 
 # load train data
 train_data = np.loadtxt('2d.trn.dat', dtype=str)
@@ -28,6 +13,7 @@ test_features = test_data[:, :-1].astype(float)
 test_labels = test_data[:, -1:].flatten()  # ['A','B','C' .... 'A']
 
 (count, dim) = train_features.shape
+classes = np.unique(train_labels)
 
 train_labels = ordinal_encoding(train_labels)
 test_labels = ordinal_encoding(test_labels)
@@ -53,19 +39,23 @@ batch size: 128
 model1 = MLPClassifier(dim_in=dim,
                        dim_hid=20,
                        n_classes=np.max(train_labels) + 1,
-                       activation_hid=Activation.Sigmoid.value,
-                       activation_out=Activation.Sigmoid.value,
-                       inti_weights_type='uniform',
-                       lambd=0.08)
+                       activation_hid=Activation.Sigmoid,
+                       activation_out=Activation.Sigmoid,
+                       inti_weights_type=InitWeights.Uniform)
 
 trainCEs, trainREs, valCEs, valREs = model1.train(train_features, train_labels,
                                                   val_features, val_labels,
-                                                  optimizer=Optimizer.L2MiniBatch.value,
-                                                  batch_size=128)
+                                                  eps=100,
+                                                  alpha=0.1,
+                                                  optimizer=Optimizer.Adam,
+                                                  batch_size=128,
+                                                  beta1=0.9,
+                                                  beta2=0.999,
+                                                  epsilon=(10 ** (-8)))
 
 testCE, testRE, confusion_matrix = model1.test(test_features, test_labels, confusion_matrix=True)
 print('Final testing error model1: CE = {:6.2%}, RE = {:.5f}'.format(testCE, testRE))
 
 # plot test and validation error
 plot_train_val_error(trainCEs, trainREs, valCEs, valREs)
-plot_confusion_matrix(confusion_matrix)
+plot_confusion_matrix(confusion_matrix, list(classes))

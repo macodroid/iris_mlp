@@ -7,7 +7,6 @@ from matplotlib import pyplot as plt
 def onehot_encode(labels):
     """
     :param labels: label vector
-    :param c: count of unique categories
     :return: matrix with onehot encoding
     """
     onehot_matrix = np.zeros((labels.size, labels.max() + 1))
@@ -57,9 +56,9 @@ def split_train_validation(X, y, train_ratio=0.8):
 
 
 def add_bias(X):
-    '''
+    """
     Add bias term to vector, or to every (column) vector in a matrix.
-    '''
+    """
     if X.ndim == 1:
         return np.concatenate((X, [1]))
     else:
@@ -93,15 +92,20 @@ def compute_confusion_matrix(true, pred):
     return result
 
 
-def plot_confusion_matrix(matrix):
+def plot_confusion_matrix(matrix, v):
+    classes = ['A', 'B', 'C']
     fig, ax = plt.subplots(figsize=(7.5, 7.5))
     ax.matshow(matrix, cmap=plt.cm.Greens, alpha=0.3)
+    ax.set_xticks(np.arange(len(classes)))
+    ax.set_yticks(np.arange(len(classes)))
+    ax.set_xticklabels(classes)
+    ax.set_yticklabels(classes)
     for i in range(matrix.shape[0]):
         for j in range(matrix.shape[1]):
             ax.text(x=j, y=i, s=matrix[i, j], va='center', ha='center', size='xx-large')
 
     plt.xlabel('Predictions', fontsize=18)
-    plt.ylabel('Actuals', fontsize=18)
+    plt.ylabel('Actual', fontsize=18)
     plt.title('Confusion Matrix', fontsize=18)
     plt.show()
 
