@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import random
 
@@ -128,3 +130,86 @@ def create_batches(X, y, batch_size):
 
 def print_errors(error_type, CE, RE, ep, eps):
     print(error_type + 'Error: Epoch {:3d}/{}, CE = {:6.2%}, RE = {:.5f}'.format(ep + 1, eps, CE, RE))
+
+
+def plot_dots(inputs, labels=None, predicted=None, test_inputs=None, test_labels=None, test_predicted=None, s=60, i_x=0,
+              i_y=1, title=None, block=True):
+    plt.figure(title or 3)
+    use_keypress()
+    plt.clf()
+
+    if inputs is not None:
+        if labels is None:
+            plt.gcf().canvas.set_window_title('Data distribution')
+            plt.scatter(inputs[i_x, :], inputs[i_y, :], s=s, c=palette[-1], edgecolors=[0.4] * 3, alpha=0.5,
+                        label='train data')
+
+        elif predicted is None:
+            plt.gcf().canvas.set_window_title('Class distribution')
+            for i, c in enumerate(set(labels)):
+                plt.scatter(inputs[i_x, labels == c], inputs[i_y, labels == c], s=s, c=palette[i], edgecolors=[0.4] * 3,
+                            label='train cls {}'.format(c))
+
+        else:
+            plt.gcf().canvas.set_window_title('Predicted vs. actual')
+            for i, c in enumerate(set(labels)):
+                plt.scatter(inputs[i_x, labels == c], inputs[i_y, labels == c], s=2.0 * s, c=palette[i],
+                            edgecolors=None, alpha=0.333, label='train cls {}'.format(c))
+
+            for i, c in enumerate(set(labels)):
+                plt.scatter(inputs[i_x, predicted == c], inputs[i_y, predicted == c], s=0.5 * s, c=palette[i],
+                            edgecolors=None, label='predicted {}'.format(c))
+
+        plt.xlim(limits(inputs[i_x, :]))
+        plt.ylim(limits(inputs[i_y, :]))
+
+    if test_inputs is not None:
+        if test_labels is None:
+            plt.scatter(test_inputs[i_x, :], test_inputs[i_y, :], marker='s', s=s, c=palette[-1], edgecolors=[0.4] * 3,
+                        alpha=0.5, label='test data')
+
+        elif test_predicted is None:
+            for i, c in enumerate(set(test_labels)):
+                plt.scatter(test_inputs[i_x, test_labels == c], test_inputs[i_y, test_labels == c], marker='s', s=s,
+                            c=palette[i], edgecolors=[0.4] * 3, label='test cls {}'.format(c))
+
+        else:
+            for i, c in enumerate(set(test_labels)):
+                plt.scatter(test_inputs[i_x, test_labels == c], test_inputs[i_y, test_labels == c], marker='s',
+                            s=2.0 * s, c=palette[i], edgecolors=None, alpha=0.333, label='test cls {}'.format(c))
+
+            for i, c in enumerate(set(test_labels)):
+                plt.scatter(test_inputs[i_x, test_predicted == c], test_inputs[i_y, test_predicted == c], marker='s',
+                            s=0.5 * s, c=palette[i], edgecolors=None, label='predicted {}'.format(c))
+
+        if inputs is None:
+            plt.xlim(limits(test_inputs[i_x, :]))
+            plt.ylim(limits(test_inputs[i_y, :]))
+
+    plt.legend()
+    if title is not None:
+        plt.gcf().canvas.set_window_title(title)
+    plt.tight_layout()
+    plt.show(block=block)
+
+
+def use_keypress(fig=None):
+    if fig is None:
+        fig = plt.gcf()
+    fig.canvas.mpl_connect('key_press_event', keypress)
+
+
+def limits(values, gap=0.05):
+    x0 = np.min(values)
+    x1 = np.max(values)
+    xg = (x1 - x0) * gap
+    return np.array((x0 - xg, x1 + xg))
+
+
+def keypress(e):
+    if e.key in {'q', 'escape'}:
+        os._exit(0)  # unclean exit, but exit() or sys.exit() won't work
+    if e.key in {' ', 'enter'}:
+        plt.close()  # skip blocking figures
+
+palette = ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999']
